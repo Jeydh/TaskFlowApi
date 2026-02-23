@@ -1,4 +1,6 @@
 {
+    "name": "jeydh/taskflow-api",
+    "description": "API Symfony Taskflow",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
