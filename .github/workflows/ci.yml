@@ -65,12 +65,12 @@ jobs:
           done
           echo "PostgreSQL is not ready"
           exit 1
-    
-      - name: Create test database
-        run: php bin/console doctrine:database:create --if-not-exists --env=test
 
       - name: Create .env for CI
         run: touch .env
+
+      - name: Create test database
+        run: php bin/console doctrine:database:create --if-not-exists --env=test
 
       - name: Run migrations (test)
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
