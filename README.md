@@ -87,16 +87,3 @@ Construire une API de gestion de tâches réutilisable avec un futur front (web/
 > Les routes `tasks` sont actuellement exposées par API Platform.
 
 ---
-
-## Exemple de création de tâche
-
-### Requête
-`POST /api/tasks`
-
-```json
-{
-  "title": "Première tâche",
-  "description": "Test API Platform",
-  "status": "todo",
-  "priority": "medium"
-}

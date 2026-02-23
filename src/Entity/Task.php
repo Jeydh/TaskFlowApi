@@ -58,7 +58,7 @@ class Task
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['task:read'])]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(length: 255)]
     #[Groups(['task:read', 'task:write'])]
@@ -69,7 +69,7 @@ class Task
         minMessage: "Title must be at least {{ limit }} characters long.",
         maxMessage: "Title cannot be longer than {{ limit }} characters."
     )]
-    private ?string $title = null;
+    private string $title;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['task:read', 'task:write'])]
@@ -88,7 +88,7 @@ class Task
         choices: TaskStatus::VALUES,
         message: "Status must be one of: {{ choices }}."
     )]
-    private ?string $status = null;
+    private string $status;
 
     #[ORM\Column(length: 50)]
     #[Groups(['task:read', 'task:write'])]
@@ -97,7 +97,7 @@ class Task
         choices: TaskPriority::VALUES,
         message: "Priority must be one of: {{ choices }}."
     )]
-    private ?string $priority = null;
+    private string $priority;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['task:read', 'task:write'])]
@@ -110,15 +110,15 @@ class Task
 
     #[ORM\Column]
     #[Groups(['task:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     #[ORM\Column]
     #[Groups(['task:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private \DateTimeImmutable $updatedAt;
 
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $createdBy = null;
+    private User $createdBy;
 
     #[ORM\ManyToOne(inversedBy: 'assignedTasks')]
     #[Groups(['task:read', 'task:write'])]
@@ -161,7 +161,7 @@ class Task
 
     public function setStatus(string $status): static
     {
-        $this->status = $status !== null ? TaskStatus::normalize($status) : null;
+        $this->status = TaskStatus::normalize($status);
 
         return $this;
     }
@@ -173,7 +173,7 @@ class Task
 
     public function setPriority(string $priority): static
     {
-        $this->priority = $priority !== null ? TaskPriority::normalize($priority) : null;
+        $this->priority = TaskPriority::normalize($priority);
 
         return $this;
     }
@@ -222,13 +222,13 @@ class Task
     #[Groups(['task:read'])]
     public function getCreatedById(): ?int
     {
-        return $this->createdBy?->getId();
+        return $this->createdBy->getId();
     } 
 
     #[Groups(['task:read'])]
     public function getCreatedByEmail(): ?string
     {
-        return $this->createdBy?->getEmail();
+        return $this->createdBy->getEmail();
     }
 
     public function setCreatedBy(?User $createdBy): static

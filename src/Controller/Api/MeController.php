@@ -2,9 +2,11 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+
 
 final class MeController extends AbstractController
 {
@@ -13,7 +15,7 @@ final class MeController extends AbstractController
     {
         $user = $this->getUser();
 
-        if (!$user) {
+        if (!$user instanceof User) {
             return $this->json([
                 'message' => 'Unauthorized',
             ], 401);

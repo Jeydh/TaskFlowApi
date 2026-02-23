@@ -22,6 +22,7 @@ final class TaskStateProcessor implements ProcessorInterface
     }
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
+        // @phpstan-ignore-next-line Defensive runtime guard: only process Task entities, delegate others
         if (!$data instanceof Task) {
             return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
         }

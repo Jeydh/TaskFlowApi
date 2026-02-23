@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: app_test
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ChangeMe!
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U app -d app_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      APP_ENV: test
+      APP_DEBUG: 1
+      APP_SECRET: ci_test_secret
+      DATABASE_URL: postgresql://app:ChangeMe!@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      JWT_PASSPHRASE: test_ci_passphrase
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_pgsql
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Create JWT keys for CI
+        run: |
+          mkdir -p config/jwt
+          openssl genrsa -out config/jwt/private.pem -aes256 -passout pass:${JWT_PASSPHRASE} 2048
+          openssl rsa -pubout -in config/jwt/private.pem -passin pass:${JWT_PASSPHRASE} -out config/jwt/public.pem
+
+      - name: Wait for PostgreSQL
+        env:
+          PGPASSWORD: ChangeMe!
+        run: |
+          for i in {1..30}; do
+            pg_isready -h 127.0.0.1 -p 5432 -U app -d app_test && exit 0
+            sleep 2
+          done
+          echo "PostgreSQL is not ready"
+          exit 1
+
+      - name: Run migrations (test)
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Load fixtures (test)
+        run: php bin/console doctrine:fixtures:load --no-interaction --env=test
+
+      - name: Warmup cache for PHPStan Symfony extension
+        run: APP_ENV=dev php bin/console cache:warmup
+
+      - name: PHPStan
+        run: composer phpstan
+
+      - name: PHPUnit
+        run: composer test
