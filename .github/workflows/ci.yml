@@ -33,6 +33,7 @@ jobs:
       JWT_SECRET_KEY: config/jwt/private.pem
       JWT_PUBLIC_KEY: config/jwt/public.pem
       JWT_PASSPHRASE: test_ci_passphrase
+      MESSENGER_TRANSPORT_DSN: "sync://"
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 
     steps:
