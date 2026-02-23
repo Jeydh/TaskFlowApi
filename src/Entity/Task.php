@@ -14,16 +14,37 @@ use ApiPlatform\Metadata\Delete;
 use App\State\TaskStateProcessor;
 use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\ApiProperty;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
 
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
-        new Delete(),
+        new Get(
+            security: 
+            "is_granted('ROLE_USER') and 
+            (object.getCreatedBy() == user or object.getAssignedTo() == user)",
+            securityMessage: "You can only access tasks you created or that are assigned to you."
+        ),
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Patch(
+            security: 
+            "is_granted('ROLE_USER') and 
+            (object.getCreatedBy() == user)",
+            securityMessage: "You can only edit tasks you created."
+        ),
+        new Delete(
+            security: 
+            "is_granted('ROLE_USER') and
+            (object.getCreatedBy() == user)",
+            securityMessage: "You can only delete tasks you created."
+        ),
     ],
     normalizationContext: ['groups' => ['task:read']],
     denormalizationContext: ['groups' => ['task:write']],
@@ -41,22 +62,50 @@ class Task
 
     #[ORM\Column(length: 255)]
     #[Groups(['task:read', 'task:write'])]
+    #[Assert\NotBlank(message: "Title should not be blank.")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "Title must be at least {{ limit }} characters long.",
+        maxMessage: "Title cannot be longer than {{ limit }} characters."
+    )]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['task:read', 'task:write'])]
+    #[Assert\Length(
+        min: 5,
+        max: 5000,
+        minMessage: "Description must be at least {{ limit }} characters long.",
+        maxMessage: "Description cannot be longer than {{ limit }} characters."
+    )]
     private ?string $description = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['task:read', 'task:write'])]
+    #[Assert\NotBlank(message: "Status should not be blank.")]
+    #[Assert\Choice(
+        choices: TaskStatus::VALUES,
+        message: "Status must be one of: {{ choices }}."
+    )]
     private ?string $status = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['task:read', 'task:write'])]
+    #[Assert\NotBlank(message: "Priority should not be blank.")]
+    #[Assert\Choice(
+        choices: TaskPriority::VALUES,
+        message: "Priority must be one of: {{ choices }}."
+    )]
     private ?string $priority = null;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['task:read', 'task:write'])]
+    #[Assert\Type("\DateTimeInterface", message: "Due date must be a valid datetime.")]
+    #[Assert\GreaterThanOrEqual(
+        value: "today",
+        message: "Due date cannot be in the past."
+    )]
     private ?\DateTimeImmutable $dueDate = null;
 
     #[ORM\Column]
@@ -88,7 +137,7 @@ class Task
 
     public function setTitle(string $title): static
     {
-        $this->title = $title;
+        $this->title = trim($title);
 
         return $this;
     }
@@ -100,7 +149,7 @@ class Task
 
     public function setDescription(?string $description): static
     {
-        $this->description = $description;
+        $this->description = $description !== null ? trim($description) : null;
 
         return $this;
     }
@@ -112,7 +161,7 @@ class Task
 
     public function setStatus(string $status): static
     {
-        $this->status = $status;
+        $this->status = $status !== null ? TaskStatus::normalize($status) : null;
 
         return $this;
     }
@@ -124,7 +173,7 @@ class Task
 
     public function setPriority(string $priority): static
     {
-        $this->priority = $priority;
+        $this->priority = $priority !== null ? TaskPriority::normalize($priority) : null;
 
         return $this;
     }
