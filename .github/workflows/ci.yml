@@ -31,6 +31,7 @@ jobs:
       DATABASE_URL: postgresql://app:{{ secrets.CI_POSTGRES_PASSWORD }}@127.0.0.1:5432/app?serverVersion=16&charset=utf8
       DEFAULT_URI: http://127.0.1:8000
       JWT_PASSPHRASE: test_ci_passphrase
+      CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 
     steps:
       - name: Checkout
