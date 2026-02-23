@@ -9,11 +9,11 @@ final class TaskSecurityTest extends ApiTestCaseBase
     public function testUserCannotAccessOthersTasks(): void
     {
         $client = static::createClient();
-        $token = $this->getJwtToken($client);
+        $login = $this->getAuthTokens($client);
 
         $client->request('GET', '/api/me', [
             'headers' => [
-                'Authorization' => 'Bearer '.$token,
+                'Authorization' => 'Bearer '.$login['token'],
             ],
         ]);
         self::assertResponseIsSuccessful();

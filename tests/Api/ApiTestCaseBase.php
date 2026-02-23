@@ -9,11 +9,11 @@ abstract class ApiTestCaseBase extends ApiTestCase
 {
     protected static ?bool $alwaysBootKernel = true;
 
-    public function getJwtToken(
+    public function getAuthTokens(
         Client $client, 
         string $email = 'test@example.com', 
         string $password = 'test1234'
-    ): string
+    ): array
     {
         $response = $client->request('POST', '/api/login', [
             'json' => [
@@ -22,6 +22,6 @@ abstract class ApiTestCaseBase extends ApiTestCase
             ],
         ]);
         $data = $response->toArray(false);
-        return $data['token'];
+        return $data;
     }
 }
