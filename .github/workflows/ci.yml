@@ -30,6 +30,8 @@ jobs:
       APP_SECRET: ci_test_secret
       DATABASE_URL: postgresql://app:{{ secrets.CI_POSTGRES_PASSWORD }}@127.0.0.1:5432/app?serverVersion=16&charset=utf8
       DEFAULT_URI: http://127.0.1:8000
+      JWT_SECRET_KEY: config/jwt/private.pem
+      JWT_PUBLIC_KEY: config/jwt/public.pem
       JWT_PASSPHRASE: test_ci_passphrase
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 
