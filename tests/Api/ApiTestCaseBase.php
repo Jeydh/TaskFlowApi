@@ -24,4 +24,9 @@ abstract class ApiTestCaseBase extends ApiTestCase
         $data = $response->toArray(false);
         return $data;
     }
+
+    protected function dumpTest(mixed $data): void
+    {
+        fwrite(STDERR, json_encode($data, JSON_PRETTY_PRINT) . "\n");
+    }
 }

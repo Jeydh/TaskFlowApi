@@ -11,19 +11,22 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use App\Dto\Task\TaskCreateInput;
+use App\State\TaskCreateProcessor;
 use App\State\TaskStateProcessor;
 use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\ApiProperty;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
 
 #[ApiResource(
     operations: [
         new Get(
-            security: 
-            "is_granted('ROLE_USER') and 
+            security: "is_granted('ROLE_USER') and 
             (object.getCreatedBy() == user or object.getAssignedTo() == user)",
             securityMessage: "You can only access tasks you created or that are assigned to you."
         ),
@@ -31,25 +34,36 @@ use App\Enum\TaskPriority;
             security: "is_granted('ROLE_USER')"
         ),
         new Post(
-            security: "is_granted('ROLE_USER')"
+            input: TaskCreateInput::class,
+            security: "is_granted('ROLE_USER')",
+            securityMessage: "You must be authenticated to create tasks.",
+            processor: TaskCreateProcessor::class
         ),
         new Patch(
-            security: 
-            "is_granted('ROLE_USER') and 
+            security: "is_granted('ROLE_USER') and 
             (object.getCreatedBy() == user)",
-            securityMessage: "You can only edit tasks you created."
+            securityMessage: "You can only edit tasks you created.",
+            processor: TaskStateProcessor::class
+
         ),
         new Delete(
-            security: 
-            "is_granted('ROLE_USER') and
+            security: "is_granted('ROLE_USER') and
             (object.getCreatedBy() == user)",
             securityMessage: "You can only delete tasks you created."
         ),
     ],
     normalizationContext: ['groups' => ['task:read']],
     denormalizationContext: ['groups' => ['task:write']],
-    processor: TaskStateProcessor::class
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'status' => 'exact',
+    'priority' => 'exact',
+])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'createdAt',
+    'updatedAt',
+    'dueDate'
+], arguments: ['orderParameterName' => 'order'])]
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 class Task
@@ -118,12 +132,17 @@ class Task
 
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['task:read'])]
     private User $createdBy;
 
     #[ORM\ManyToOne(inversedBy: 'assignedTasks')]
     #[Groups(['task:read', 'task:write'])]
     #[ApiProperty(readableLink: false, writableLink: false)]
     private ?User $assignedTo = null;
+
+    #[ORM\ManyToOne(inversedBy: 'tasks')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Project $project = null;
 
     public function getId(): ?int
     {
@@ -214,24 +233,12 @@ class Task
         return $this;
     }
 
-    public function getCreatedBy(): ?User
+    public function getCreatedBy(): User
     {
         return $this->createdBy;
     }
-    
-    #[Groups(['task:read'])]
-    public function getCreatedById(): ?int
-    {
-        return $this->createdBy->getId();
-    } 
 
-    #[Groups(['task:read'])]
-    public function getCreatedByEmail(): ?string
-    {
-        return $this->createdBy->getEmail();
-    }
-
-    public function setCreatedBy(?User $createdBy): static
+    public function setCreatedBy(User $createdBy): static
     {
         $this->createdBy = $createdBy;
 
@@ -246,6 +253,18 @@ class Task
     public function setAssignedTo(?User $assignedTo): static
     {
         $this->assignedTo = $assignedTo;
+
+        return $this;
+    }
+
+    public function getProject(): ?Project
+    {
+        return $this->project;
+    }
+
+    public function setProject(?Project $project): static
+    {
+        $this->project = $project;
 
         return $this;
     }

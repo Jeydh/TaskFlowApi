@@ -18,8 +18,8 @@ final class TaskStateProcessor implements ProcessorInterface
         #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
         private ProcessorInterface $persistProcessor,
         private Security $security,
-    ) {
-    }
+    ) {}
+
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         // @phpstan-ignore-next-line Defensive runtime guard: only process Task entities, delegate others
@@ -37,19 +37,6 @@ final class TaskStateProcessor implements ProcessorInterface
                 throw new \LogicException('Authenticated user not found.');
             }
 
-            if ($data->getCreatedBy() === null) {
-                $data->setCreatedBy($user);
-            }
-
-            if ($data->getCreatedAt() === null) {
-                $data->setCreatedAt($now);
-            }
-
-            $data->setUpdatedAt($now);
-        }
-
-        // PATCH: bump updatedAt
-        if (($context['item_operation_name'] ?? null) === 'patch' || str_contains((string) $operation->getName(), '_patch')) {
             $data->setUpdatedAt($now);
         }
 

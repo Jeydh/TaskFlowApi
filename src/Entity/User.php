@@ -2,12 +2,18 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+
+#[ApiResource(
+    security: "is_granted('ROLE_USER') and object == user",
+    securityMessage: "You can only access your own user data."
+)]
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -46,10 +52,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'assignedTo')]
     private Collection $assignedTasks;
 
+    /**
+     * @var Collection<int, Project>
+     */
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'owner')]
+    private Collection $projects;
+
+    /**
+     * @var Collection<int, Project>
+     */
+    #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'members')]
+    private Collection $memberOf;
+
     public function __construct()
     {
         $this->tasks = new ArrayCollection();
         $this->assignedTasks = new ArrayCollection();
+        $this->projects = new ArrayCollection();
+        $this->memberOf = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -151,18 +171,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function removeTask(Task $task): static
-    {
-        if ($this->tasks->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->getCreatedBy() === $this) {
-                $task->setCreatedBy(null);
-            }
-        }
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Task>
      */
@@ -188,6 +196,63 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($assignedTask->getAssignedTo() === $this) {
                 $assignedTask->setAssignedTo(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Project>
+     */
+    public function getProjects(): Collection
+    {
+        return $this->projects;
+    }
+
+    public function addProject(Project $project): static
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects->add($project);
+            $project->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProject(Project $project): static
+    {
+        if ($this->projects->removeElement($project)) {
+            // set the owning side to null (unless already changed)
+            if ($project->getOwner() === $this) {
+                $project->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Project>
+     */
+    public function getMemberOf(): Collection
+    {
+        return $this->memberOf;
+    }
+
+    public function addMemberOf(Project $memberOf): static
+    {
+        if (!$this->memberOf->contains($memberOf)) {
+            $this->memberOf->add($memberOf);
+            $memberOf->addMember($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMemberOf(Project $memberOf): static
+    {
+        if ($this->memberOf->removeElement($memberOf)) {
+            $memberOf->removeMember($this);
         }
 
         return $this;
