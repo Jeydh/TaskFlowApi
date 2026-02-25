@@ -30,7 +30,7 @@ final class ProjectCreateProcessor implements ProcessorInterface
             throw new \InvalidArgumentException('Expected ProjectCreateInput.');
         }
 
-        /** @var User $user */
+        /** @var User $owner */
         $owner = $this->security->getUser();
         $now = new \DateTimeImmutable();
 

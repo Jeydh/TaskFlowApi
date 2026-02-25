@@ -62,11 +62,11 @@ class Project
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['project:read'])]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(length: 255)]
     #[Groups(['project:read', 'project:write'])]
-    private ?string $name = null;
+    private string $name;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['project:read', 'project:write'])]
@@ -74,16 +74,16 @@ class Project
 
     #[ORM\Column]
     #[Groups(['project:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     #[ORM\Column]
     #[Groups(['project:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private \DateTimeImmutable $updatedAt;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['project:read'])]
-    private ?User $owner = null;
+    private User $owner;
 
     /**
      * @var Collection<int, User>
